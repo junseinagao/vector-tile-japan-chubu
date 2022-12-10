@@ -1,0 +1,27 @@
+name: Publish GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish_gh_pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: make
+        run: make docker-pull && make
+      - name: Fix tiles.json
+        run: |
+          USER_NAME=$(echo $GITHUB_REPOSITORY | awk -F/ '{print $1}')
+          REPO_NAME=$(echo $GITHUB_REPOSITORY | awk -F/ '{print $2}')
+          sed "s|http://localhost:5000/|https://$USER_NAME.github.io/$REPO_NAME/|g" -i docs/tiles.json
+          sed "s|http://localhost:5000/|https://$USER_NAME.github.io/$REPO_NAME/|g" -i docs/style.json
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
